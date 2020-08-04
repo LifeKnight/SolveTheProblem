@@ -1,0 +1,16 @@
+[
+{
+  "modid": "mod",
+  "name": "Mod",
+  "description": "A Mod.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["LifeKnight"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
