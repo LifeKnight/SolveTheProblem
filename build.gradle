@@ -20,9 +20,9 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "2.0.2"
 }
 */
-version = "4.0"
-group= "com.lifeknight.modbase" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "modbase"
+version = "1.0"
+group= "com.lifeknight.solvetheproblem" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "SolveTheProblem"
 
 minecraft {
     version = "1.8.9-11.15.1.2318-1.8.9"
@@ -56,15 +56,6 @@ processResources
                 exclude 'mcmod.info'
             }
         }
-
-jar {
-    manifest {
-        attributes "FMLCorePlugin": "com.lifeknight.modbase.mod.Tweaker",
-                "ModSide": "CLIENT",
-                "FMLCorePluginContainsFMLMod": "Yes",
-                "ForceLoadAsMod": true
-    }
-}
 
 compileJava {
     sourceCompatibility = 1.8
