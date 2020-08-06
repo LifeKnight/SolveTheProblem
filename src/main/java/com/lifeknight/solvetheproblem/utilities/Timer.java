@@ -45,7 +45,7 @@ public class Timer {
     private void waitForEnd() {
         while (!(this.getTotalMilliseconds() <= 0)) {
             try {
-                Thread.sleep(50);
+                Thread.sleep(25);
                 if (ended) return;
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -81,6 +81,13 @@ public class Timer {
 
     public boolean isRunning() {
         return running;
+    }
+
+    public void reset() {
+        running = false;
+        ended = false;
+        lastPauseTime = 0L;
+        timeSpentPaused = 0L;
     }
 
     public String getFormattedTime() {
@@ -264,6 +271,10 @@ public class Timer {
     public long getDays() {
         long millisecondsLeft = this.getTotalMilliseconds();
         return millisecondsLeft / 86400000;
+    }
+
+    public void setTimeFromSeconds(long seconds) {
+        endTime = System.currentTimeMillis() + seconds * 1000;
     }
 
     public interface ITimerListener {

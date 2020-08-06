@@ -20,9 +20,11 @@ import static net.minecraft.util.EnumChatFormatting.RED;
 public class ProblemGui extends GuiScreen {
     private String problem = "";
     private String problem2 = "";
+    private String problem3 = "";
     private String message = "";
-    private boolean isMathProblem;
+    private boolean isButtonProblem;
     private String answer;
+    private String alternateAnswer;
     private LifeKnightTextField textField;
     private final List<LifeKnightButton> answerButtons = new ArrayList<>();
     private LifeKnightButton enterButton;
@@ -33,15 +35,16 @@ public class ProblemGui extends GuiScreen {
         this.drawCenteredString(fontRendererObj, DARK_BLUE + "Problem", this.width / 2, 5, 0xffffffff);
         this.drawCenteredString(fontRendererObj, problem, this.width / 2, getScaledHeight(50), 0xffffffff);
         this.drawCenteredString(fontRendererObj, problem2, this.width / 2, getScaledHeight(50) + 12, 0xffffffff);
+        this.drawCenteredString(fontRendererObj, problem3, this.width / 2, getScaledHeight(50) + 24, 0xffffffff);
         this.drawString(fontRendererObj, message, 5, 5, 0xffffffff);
-        textField.drawTextBoxAndName();
+        textField.drawTextBox();
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
     @Override
     public void initGui() {
-        super.buttonList.clear();
-        textField = new LifeKnightTextField(0, super.width / 2 - 50, getScaledHeight(100), 100, 24, "Unscramble the word.") {
+        answerButtons.clear();
+        textField = new LifeKnightTextField(0, super.width / 2 - 50, getScaledHeight(140), 100, 21, "Unscramble the word.") {
             @Override
             public void handleInput() {
                 this.lastInput = this.getText();
@@ -50,35 +53,35 @@ public class ProblemGui extends GuiScreen {
             }
         };
 
-        enterButton = new LifeKnightButton(">", 1, this.width / 2 + 105, getScaledHeight(102), 20) {
+        enterButton = new LifeKnightButton(">", 1, this.width / 2 + 55, getScaledHeight(142), 20) {
             @Override
             public void work() {
                 textField.handleInput();
             }
         };
 
-        answerButtons.add(new LifeKnightButton("", 2, this.width / 2 - 50, getScaledHeight(super.height / 2), 100) {
+        answerButtons.add(new LifeKnightButton("", 2, this.width / 2 - 75, getScaledHeight(super.height / 2), 150) {
             @Override
             public void work() {
                 checkForAnswer(this.displayString);
             }
         });
 
-        answerButtons.add(new LifeKnightButton("", 3, this.width / 2 - 50, getScaledHeight(super.height / 2 + 50), 100) {
+        answerButtons.add(new LifeKnightButton("", 3, this.width / 2 - 75, getScaledHeight(super.height / 2 + 50), 150) {
             @Override
             public void work() {
                 checkForAnswer(this.displayString);
             }
         });
 
-        answerButtons.add(new LifeKnightButton("", 4, this.width / 2 - 50, getScaledHeight(super.height / 2 + 100), 100) {
+        answerButtons.add(new LifeKnightButton("", 4, this.width / 2 - 75, getScaledHeight(super.height / 2 + 100), 150) {
             @Override
             public void work() {
                 checkForAnswer(this.displayString);
             }
         });
 
-        answerButtons.add(new LifeKnightButton("", 5, this.width / 2 - 50, getScaledHeight(super.height / 2 + 150), 100) {
+        answerButtons.add(new LifeKnightButton("", 5, this.width / 2 - 75, getScaledHeight(super.height / 2 + 150), 150) {
             @Override
             public void work() {
                 checkForAnswer(this.displayString);
@@ -91,13 +94,14 @@ public class ProblemGui extends GuiScreen {
     }
 
     public void checkForAnswer(String input) {
-        if (input.equalsIgnoreCase(answer)) {
+        input = input.replace(" ", "");
+        if (input.equalsIgnoreCase(answer.replace(" ", "")) || (!input.isEmpty() && input.equalsIgnoreCase(alternateAnswer.replace(" ", "")))) {
             this.mc.displayGuiScreen(null);
             if (this.mc.currentScreen == null) this.mc.setIngameFocus();
             onGuiClosed();
             return;
         }
-        message = RED + "INCORRECT: " + answer;
+        message = RED + "INCORRECT: " + answer + (!alternateAnswer.isEmpty() ? " OR " + alternateAnswer : "");
         generateProblem();
     }
 
@@ -114,14 +118,14 @@ public class ProblemGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (keyCode == 1 && !hardLock.getValue()) {
+        if (keyCode == 1 && (!hardLock.getValue()) || !runMod.getValue()) {
             this.mc.displayGuiScreen(null);
             if (this.mc.currentScreen == null) this.mc.setIngameFocus();
             onGuiClosed();
             return;
         }
         textField.textboxKeyTyped(typedChar, keyCode);
-        if (isMathProblem) {
+        if (isButtonProblem) {
             if (keyCode == 0x02) answerButtons.get(0).work();
             if (keyCode == 0x03) answerButtons.get(1).work();
             if (keyCode == 0x04) answerButtons.get(2).work();
@@ -140,13 +144,15 @@ public class ProblemGui extends GuiScreen {
     }
 
     private void generateProblem() {
-        isMathProblem = false;
+        isButtonProblem = false;
         for (LifeKnightButton lifeKnightButton : answerButtons) {
             lifeKnightButton.visible = false;
         }
         enterButton.visible = false;
         textField.setVisible(false);
+        alternateAnswer = "";
         problem2 = "";
+        problem3 = "";
 
         boolean scramble = Miscellaneous.getRandomTrueOrFalse();
 
@@ -158,13 +164,13 @@ public class ProblemGui extends GuiScreen {
             for (LifeKnightButton lifeKnightButton : answerButtons) {
                 lifeKnightButton.visible = true;
             }
-            isMathProblem = true;
+            isButtonProblem = true;
             createMathProblem();
             return;
         }
 
         answer = Miscellaneous.getRandomElement(nounsListList.get(problemDifficulty.getValue()));
-        problem = Text.scramble(answer);
+        problem = "Unscramble: " + Text.scramble(answer);
         textField.setVisible(true);
         enterButton.visible = true;
     }
@@ -241,13 +247,15 @@ public class ProblemGui extends GuiScreen {
                 rightValue = x + a;
                 newProblem.append("x").append(" + ").append(a);
                 break;
-            } case 1: {
+            }
+            case 1: {
                 int a = Miscellaneous.getRandomTrueOrFalse() ?
                         Miscellaneous.getRandomIntBetweenRange(-12, -3) : Miscellaneous.getRandomIntBetweenRange(3, 12);
                 rightValue = x - a;
                 newProblem.append("x").append(" - ").append(a);
                 break;
-            } default: {
+            }
+            default: {
                 int a = Miscellaneous.getRandomTrueOrFalse() ?
                         Miscellaneous.getRandomIntBetweenRange(-12, -3) : Miscellaneous.getRandomIntBetweenRange(3, 12);
                 rightValue = x * a;
@@ -263,13 +271,15 @@ public class ProblemGui extends GuiScreen {
                     rightValue += x + a;
                     newProblem.append(" + x + ").append(a);
                     break;
-                } case 1: {
+                }
+                case 1: {
                     int a = Miscellaneous.getRandomTrueOrFalse() ?
                             Miscellaneous.getRandomIntBetweenRange(-12, -3) : Miscellaneous.getRandomIntBetweenRange(3, 12);
                     rightValue += x - a;
                     newProblem.append(" + x - ").append(a);
                     break;
-                } default: {
+                }
+                default: {
                     int a = Miscellaneous.getRandomTrueOrFalse() ?
                             Miscellaneous.getRandomIntBetweenRange(-12, -3) : Miscellaneous.getRandomIntBetweenRange(3, 12);
                     rightValue += x * a;
@@ -298,10 +308,10 @@ public class ProblemGui extends GuiScreen {
         int b = Miscellaneous.getRandomIntBetweenRange(-7, 7);
         int c = Miscellaneous.getRandomIntBetweenRange(-7, 7);
         int d = Miscellaneous.getRandomIntBetweenRange(-7, 7);
-        
+
         int firstRightValue;
         int secondRightValue;
-        
+
         if (Miscellaneous.getRandomTrueOrFalse()) {
             firstRightValue = a * x + b * y;
             problem = a + "x + " + b + "y = " + firstRightValue;
@@ -309,7 +319,7 @@ public class ProblemGui extends GuiScreen {
             firstRightValue = b * y - a * x;
             problem = a + "y - " + a + "x = " + firstRightValue;
         }
-        
+
         if (Miscellaneous.getRandomTrueOrFalse()) {
             secondRightValue = c * x + d * y;
             problem2 = c + "x + " + d + "y = " + secondRightValue;
@@ -335,6 +345,125 @@ public class ProblemGui extends GuiScreen {
     }
 
     private void createExtremelyDifficultMathProblem() {
+        int correctIndex = Miscellaneous.getRandomIntBetweenRange(0, 3);
 
+        int random = Miscellaneous.getRandomIntBetweenRange(0, 2);
+
+        if (random == 0 || random == 1) {
+            for (LifeKnightButton lifeKnightButton : answerButtons) {
+                lifeKnightButton.visible = false;
+            }
+            isButtonProblem = false;
+            textField.setVisible(true);
+            enterButton.visible = true;
+        }
+
+        if (random == 0) {
+            int a = Miscellaneous.getRandomIntBetweenRange(1, 7);
+            if (Miscellaneous.getRandomTrueOrFalse()) a = -a;
+            int b = Miscellaneous.getRandomIntBetweenRange(1, 7);
+            if (Miscellaneous.getRandomTrueOrFalse()) b = -b;
+            // Factor
+            // x^2 + ax + bx + ab
+            String abSum = a + b < 0 ? ("- " + Math.abs(a + b)) : ("+ " + (a + b));
+            String abProduct = a * b < 0 ? ("- " + Math.abs(a * b)) : ("+ " + (a * b));
+            problem = "Factor: x^2 " + abSum + "x " + abProduct;
+            String aString = a < 0 ? "- " + Math.abs(a) : "+ " + a;
+            String bString = b < 0 ? "- " + Math.abs(b): "+ " + b;
+            answer = "(x " + aString + ")(x " + bString + ")";
+            alternateAnswer = "(x " + bString + ")(x " + aString + ")";
+        } else if (random == 1) {
+            int a = Miscellaneous.getRandomIntBetweenRange(1, 7);
+            if (Miscellaneous.getRandomTrueOrFalse()) a = -a;
+            int b = Miscellaneous.getRandomIntBetweenRange(1, 7);
+            if (Miscellaneous.getRandomTrueOrFalse()) b = -b;
+            // Factor
+            // x^2 + ax + bx + ab
+            String abSum = a + b < 0 ? ("- " + Math.abs(a + b)) : ("+ " + (a + b));
+            String abProduct = a * b < 0 ? ("- " + Math.abs(a * b)) : ("+ " + (a * b));
+            String aString = a < 0 ? "- " + Math.abs(a) : "+ " + a;
+            String bString = b < 0 ? "- " + Math.abs(b): "+ " + b;
+            problem = "Expand: (x " + aString + ")(x " + bString + ")";
+            answer = "x^2 " + abSum + "x " + abProduct;
+            if (a + b == 0) alternateAnswer = "x^2 " + abProduct;
+        } else {
+            int x = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int y = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int z = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int a = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int b = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int c = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int d = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int f = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int g = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int h = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int j = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+            int k = Miscellaneous.getRandomIntBetweenRange(-7, 7);
+
+
+            int firstRightValue;
+            int secondRightValue;
+            int thirdRightValue;
+
+            switch (Miscellaneous.getRandomIntBetweenRange(0, 2)) {
+                case 0:
+                    firstRightValue = a * x + b * y + c * z;
+                    problem = a + "x + " + b + "y + " + c + "z = " + firstRightValue;
+                    break;
+                case 1:
+                    firstRightValue = b * y - c * z + a * x;
+                    problem = b + "y + " + c + "z + " + a + "x = " + firstRightValue;
+                    break;
+                case 2:
+                    firstRightValue = c * z + b * y - a * x;
+                    problem = c + "z + " + b + "y - " + a + "x = " + firstRightValue;
+                    break;
+            }
+
+            switch (Miscellaneous.getRandomIntBetweenRange(0, 2)) {
+                case 0:
+                    secondRightValue = d * x + f * y + g * z;
+                    problem2 = d + "x + " + f + "y + " + g + "z = " + secondRightValue;
+                    break;
+                case 1:
+                    secondRightValue = f * y - g * z + d * x;
+                    problem2 = f + "y + " + g + "z + " + d + "x = " + secondRightValue;
+                    break;
+                case 2:
+                    secondRightValue = g * z + f * y - d * x;
+                    problem2 = g + "z + " + f + "y - " + d + "x = " + secondRightValue;
+                    break;
+            }
+
+            switch (Miscellaneous.getRandomIntBetweenRange(0, 2)) {
+                case 0:
+                    thirdRightValue = h * x + j * y + k * z;
+                    problem3 = h + "x + " + j + "y + " + k + "z = " + thirdRightValue;
+                    break;
+                case 1:
+                    thirdRightValue = j * y - k * z + h * x;
+                    problem3 = j + "y + " + k + "z + " + h + "x = " + thirdRightValue;
+                    break;
+                case 2:
+                    thirdRightValue = k * z + j * y - h * x;
+                    problem3 = k + "z + " + j + "y - " + h + "x = " + thirdRightValue;
+                    break;
+            }
+
+            answer = "x = {x}; y = {y}; z = {z}";
+            for (int i = 0; i < 4; i++) {
+                if (i != correctIndex) {
+                    int newX = x + (Miscellaneous.getRandomTrueOrFalse() ? Miscellaneous.getRandomIntBetweenRange(1, 3) :
+                            Miscellaneous.getRandomIntBetweenRange(-3, 1));
+                    int newY = y + (Miscellaneous.getRandomTrueOrFalse() ? Miscellaneous.getRandomIntBetweenRange(1, 3) :
+                            Miscellaneous.getRandomIntBetweenRange(-3, 1));
+                    int newZ = z + (Miscellaneous.getRandomTrueOrFalse() ? Miscellaneous.getRandomIntBetweenRange(1, 3) :
+                            Miscellaneous.getRandomIntBetweenRange(-3, 1));
+                    answerButtons.get(i).displayString = answer.replace("{x}", String.valueOf(newX)).replace("{y}", String.valueOf(newY)).replace("{z}", String.valueOf(newZ));
+                }
+            }
+            answer = "x = " + x + "; y = " + y + "; z = " + z;
+            answerButtons.get(correctIndex).displayString = answer;
+        }
     }
 }
