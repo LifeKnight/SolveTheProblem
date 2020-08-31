@@ -3,7 +3,7 @@ package com.lifeknight.solvetheproblem.variables;
 
 import net.minecraft.util.EnumChatFormatting;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.configuration;
+import static com.lifeknight.solvetheproblem.mod.Core.configuration;
 import static net.minecraft.util.EnumChatFormatting.GREEN;
 import static net.minecraft.util.EnumChatFormatting.RED;
 

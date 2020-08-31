@@ -1,5 +1,6 @@
 package com.lifeknight.solvetheproblem.mod;
 
+import com.lifeknight.solvetheproblem.gui.LifeKnightGui;
 import com.lifeknight.solvetheproblem.gui.Manipulable;
 import com.lifeknight.solvetheproblem.gui.ProblemGui;
 import com.lifeknight.solvetheproblem.gui.hud.EnhancedHudText;
@@ -15,6 +16,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -34,17 +36,17 @@ import java.util.concurrent.Executors;
 
 import static net.minecraft.util.EnumChatFormatting.DARK_BLUE;
 
-@net.minecraftforge.fml.common.Mod(modid = Mod.modId, name = Mod.modName, version = Mod.modVersion, clientSideOnly = true)
-public class Mod {
+@net.minecraftforge.fml.common.Mod(modid = Core.modId, name = Core.modName, version = Core.modVersion, clientSideOnly = true)
+public class Core {
     public static final String
             modName = "SolveTheProblem",
-            modVersion = "1.0",
+            modVersion = "0.2",
             modId = "solvetheproblem";
     public static final EnumChatFormatting modColor = DARK_BLUE;
     public static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool(new LifeKnightThreadFactory());
     public static GuiScreen guiToOpen = null;
     private static final KeyBinding disableModKeyBind = new KeyBinding("Disable SolveTheProblem", 0x2B, modName);
-    public static final LifeKnightBoolean runMod = new LifeKnightBoolean("Mod", "Main", true);
+    public static final LifeKnightBoolean runMod = new LifeKnightBoolean("Core", "Main", true);
     public static final LifeKnightBoolean gridSnapping = new LifeKnightBoolean("Grid Snapping", "HUD", true);
     public static final LifeKnightBoolean hudTextShadow = new LifeKnightBoolean("HUD Text Shadow", "HUD", true);
     public static final LifeKnightCycle problemDifficulty = new LifeKnightCycle("Problem Difficulty", "Settings", Arrays.asList(
@@ -54,7 +56,11 @@ public class Mod {
             "More Difficult",
             "Quite Difficult"
     ));
-    public static final LifeKnightBoolean mathProblems = new LifeKnightBoolean("Math Problems", "Problems", true);
+    public static final LifeKnightCycle problemTypes = new LifeKnightCycle("Problem Types", "Settings", Arrays.asList(
+            "Scramble & Math",
+            "Scramble Only",
+            "Math Only"
+    ));
     public static final LifeKnightBoolean superimposeGui = new LifeKnightBoolean("Super Impose GUI", "Settings", false);
     public static final LifeKnightBoolean hardLock = new LifeKnightBoolean("Hard Lock", "Settings", false);
     public static final LifeKnightCycle waitType = new LifeKnightCycle("Wait Type", "Settings", Arrays.asList(
@@ -62,7 +68,7 @@ public class Mod {
             "Random")) {
         @Override
         public void onValueChange() {
-            Mod.onProblemClose();
+            Core.onProblemClose();
         }
     };
     public static final LifeKnightNumber.LifeKnightInteger timerTime = new LifeKnightNumber.LifeKnightInteger("Timer Time", "Timer", 60, 5, 300);
@@ -104,7 +110,7 @@ public class Mod {
         new EnhancedHudText("ProblemTimer") {
             @Override
             public String getTextToDisplay() {
-                return problemTimer != null ? problemTimer.getFormattedTime() : "";
+                return problemTimer != null ? Text.formatTimeFromMilliseconds(problemTimer.getTotalMilliseconds(), 2) : "";
             }
 
             @Override
@@ -117,6 +123,11 @@ public class Mod {
     }
 
     @SubscribeEvent
+    public void onWorldLoad(WorldEvent.Load event) {
+        if (runMod.getValue()) onProblemClose();
+    }
+
+    @SubscribeEvent
     public void onConnect(final FMLNetworkEvent.ClientConnectedToServerEvent event) {
         new Timer().schedule(new TimerTask() {
             @Override
@@ -124,25 +135,24 @@ public class Mod {
                 Chat.sendQueuedChatMessages();
             }
         }, 1000);
-        onProblemClose();
     }
 
     public static void onTimerEnd() {
-        if ((Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui))) && runMod.getValue() && waitType.getValue() == 0) {
+        if (Minecraft.getMinecraft().thePlayer != null && (Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui) && !(Minecraft.getMinecraft().currentScreen instanceof LifeKnightGui))) && runMod.getValue() && waitType.getValue() == 0) {
             displayProblem();
         }
         problemTimer.stop();
     }
 
     public static void displayProblem() {
-        openGui(new ProblemGui());
+        if (Minecraft.getMinecraft().thePlayer != null) openGui(new ProblemGui());
     }
 
     public static void onProblemClose() {
         if (waitType.getValue() == 0) {
             if (problemTimer == null) {
                 problemTimer = new com.lifeknight.solvetheproblem.utilities.Timer(timerTime.getValue());
-                problemTimer.onEnd(Mod::onTimerEnd);
+                problemTimer.onEnd(Core::onTimerEnd);
             } else {
                 problemTimer.reset();
                 problemTimer.setTimeFromSeconds(timerTime.getValue());
@@ -164,10 +174,11 @@ public class Mod {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
+        if (Minecraft.getMinecraft().thePlayer == null) return;
         if (event.phase == TickEvent.Phase.END) {
             ticksSinceClose++;
         }
-        if ((Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui))) && runMod.getValue()) {
+        if ((Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui) && !(Minecraft.getMinecraft().currentScreen instanceof LifeKnightGui))) && runMod.getValue()) {
             if (waitType.getValue() == 0 && !problemTimer.isRunning()) {
                 new Timer().schedule(new TimerTask() {
                     @Override
@@ -192,8 +203,8 @@ public class Mod {
     @SubscribeEvent
     public void onKeyTyped(InputEvent.KeyInputEvent event) {
         if (runMod.getValue() && Keyboard.isKeyDown(disableModKeyBind.getKeyCode())) {
-            runMod.setValue(false);
-            Chat.addSuccessMessage("Disabled mod.");
+            runMod.toggle();
+            Chat.addChatMessage(runMod.getAsString());
         }
     }
 

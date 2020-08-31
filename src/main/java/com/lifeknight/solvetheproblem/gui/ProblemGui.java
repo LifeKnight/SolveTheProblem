@@ -2,7 +2,7 @@ package com.lifeknight.solvetheproblem.gui;
 
 import com.lifeknight.solvetheproblem.gui.components.LifeKnightButton;
 import com.lifeknight.solvetheproblem.gui.components.LifeKnightTextField;
-import com.lifeknight.solvetheproblem.mod.Mod;
+import com.lifeknight.solvetheproblem.mod.Core;
 import com.lifeknight.solvetheproblem.utilities.Miscellaneous;
 import com.lifeknight.solvetheproblem.utilities.Text;
 import net.minecraft.client.gui.GuiButton;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.*;
+import static com.lifeknight.solvetheproblem.mod.Core.*;
 import static com.lifeknight.solvetheproblem.utilities.Video.getScaledHeight;
 import static net.minecraft.util.EnumChatFormatting.DARK_BLUE;
 import static net.minecraft.util.EnumChatFormatting.RED;
@@ -25,6 +25,8 @@ public class ProblemGui extends GuiScreen {
     private boolean isButtonProblem;
     private String answer;
     private String alternateAnswer;
+    private int attempts = 0;
+    private Long endTime = null;
     private LifeKnightTextField textField;
     private final List<LifeKnightButton> answerButtons = new ArrayList<>();
     private LifeKnightButton enterButton;
@@ -32,12 +34,23 @@ public class ProblemGui extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
-        this.drawCenteredString(fontRendererObj, DARK_BLUE + "Problem", this.width / 2, 5, 0xffffffff);
-        this.drawCenteredString(fontRendererObj, problem, this.width / 2, getScaledHeight(50), 0xffffffff);
-        this.drawCenteredString(fontRendererObj, problem2, this.width / 2, getScaledHeight(50) + 12, 0xffffffff);
-        this.drawCenteredString(fontRendererObj, problem3, this.width / 2, getScaledHeight(50) + 24, 0xffffffff);
-        this.drawString(fontRendererObj, message, 5, 5, 0xffffffff);
-        textField.drawTextBox();
+        if (endTime == null) {
+            this.drawCenteredString(fontRendererObj, DARK_BLUE + "Problem", this.width / 2, 5, 0xffffffff);
+            this.drawCenteredString(fontRendererObj, problem, this.width / 2, getScaledHeight(50), 0xffffffff);
+            this.drawCenteredString(fontRendererObj, problem2, this.width / 2, getScaledHeight(50) + 12, 0xffffffff);
+            this.drawCenteredString(fontRendererObj, problem3, this.width / 2, getScaledHeight(50) + 24, 0xffffffff);
+            this.drawString(fontRendererObj, message, 5, 5, 0xffffffff);
+            this.drawString(fontRendererObj, RED + "Attempts: " + attempts, 5, 30, 0xffffffff);
+            textField.drawTextBox();
+        } else {
+            if (endTime - System.currentTimeMillis() <= 0) {
+                this.close();
+                return;
+            }
+            
+            this.drawCenteredString(fontRendererObj, RED + "Too many incorrect attempts.", this.width / 2, 20, 0xffffffff);
+            this.drawCenteredString(fontRendererObj, Text.formatTimeFromMilliseconds(endTime - System.currentTimeMillis(), 2), this.width / 2, 40, 0xffffffff);
+        }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -92,17 +105,26 @@ public class ProblemGui extends GuiScreen {
         super.buttonList.addAll(answerButtons);
         generateProblem();
     }
+    
+    private void close() {
+        this.mc.displayGuiScreen(null);
+        if (this.mc.currentScreen == null) this.mc.setIngameFocus();
+        onGuiClosed();
+    }
 
     public void checkForAnswer(String input) {
         input = input.replace(" ", "");
         if (input.equalsIgnoreCase(answer.replace(" ", "")) || (!input.isEmpty() && input.equalsIgnoreCase(alternateAnswer.replace(" ", "")))) {
-            this.mc.displayGuiScreen(null);
-            if (this.mc.currentScreen == null) this.mc.setIngameFocus();
-            onGuiClosed();
+            this.close();
             return;
         }
         message = RED + "INCORRECT: " + answer + (!alternateAnswer.isEmpty() ? " OR " + alternateAnswer : "");
-        generateProblem();
+        attempts++;
+        
+        if (attempts >= 3) {
+            endTime = System.currentTimeMillis() + (problemDifficulty.getValue() + 1L) * 3L * 1000L;
+            this.buttonList.clear();
+        } else generateProblem();
     }
 
     @Override
@@ -119,9 +141,7 @@ public class ProblemGui extends GuiScreen {
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         if (keyCode == 1 && (!hardLock.getValue()) || !runMod.getValue()) {
-            this.mc.displayGuiScreen(null);
-            if (this.mc.currentScreen == null) this.mc.setIngameFocus();
-            onGuiClosed();
+            this.close();
             return;
         }
         textField.textboxKeyTyped(typedChar, keyCode);
@@ -140,7 +160,7 @@ public class ProblemGui extends GuiScreen {
 
     @Override
     public void onGuiClosed() {
-        Mod.onProblemClose();
+        Core.onProblemClose();
     }
 
     private void generateProblem() {
@@ -156,9 +176,12 @@ public class ProblemGui extends GuiScreen {
 
         boolean scramble = Miscellaneous.getRandomTrueOrFalse();
 
-        if (!mathProblems.getValue()) {
+        if (problemTypes.getValue() == 1) {
             scramble = true;
+        } else if (problemTypes.getValue() == 2) {
+            scramble = false;
         }
+
 
         if (!scramble) {
             for (LifeKnightButton lifeKnightButton : answerButtons) {
@@ -195,12 +218,14 @@ public class ProblemGui extends GuiScreen {
 
     private void createEasyMathProblem() {
         int correctIndex = Miscellaneous.getRandomIntBetweenRange(0, 3);
+        int x;
+        int y;
         int answerValue;
         boolean intermediate = problemDifficulty.getValue() == 1;
         switch (Miscellaneous.getRandomIntBetweenRange(0, 2)) {
             case 0: {
-                int x = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
-                int y = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
+                x = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
+                y = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
                 answerValue = x + y;
                 problem = x + " + " + y;
                 answer = String.valueOf(answerValue);
@@ -208,8 +233,8 @@ public class ProblemGui extends GuiScreen {
                 break;
             }
             case 1: {
-                int x = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
-                int y = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
+                x = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
+                y = intermediate ? Miscellaneous.getRandomIntBetweenRange(25, 100) : Miscellaneous.getRandomIntBetweenRange(5, 20);
                 answerValue = x - y;
                 problem = x + " - " + y;
                 answer = String.valueOf(answerValue);
@@ -217,8 +242,8 @@ public class ProblemGui extends GuiScreen {
                 break;
             }
             default: {
-                int x = intermediate ? Miscellaneous.getRandomIntBetweenRange(7, 15) : Miscellaneous.getRandomIntBetweenRange(5, 20);
-                int y = intermediate ? Miscellaneous.getRandomIntBetweenRange(7, 15) : Miscellaneous.getRandomIntBetweenRange(5, 20);
+                x = intermediate ? Miscellaneous.getRandomIntBetweenRange(7, 15) : Miscellaneous.getRandomIntBetweenRange(5, 20);
+                y = intermediate ? Miscellaneous.getRandomIntBetweenRange(7, 15) : Miscellaneous.getRandomIntBetweenRange(5, 20);
                 answerValue = x * y;
                 problem = x + " * " + y;
                 answer = String.valueOf(answerValue);
@@ -226,11 +251,26 @@ public class ProblemGui extends GuiScreen {
                 break;
             }
         }
-        for (int i = 0; i < 4; i++) {
-            if (i != correctIndex) {
-                int toAdd = Miscellaneous.getRandomTrueOrFalse() ?
-                        Miscellaneous.getRandomIntBetweenRange(1, 5) : Miscellaneous.getRandomIntBetweenRange(-5, -1);
-                answerButtons.get(i).displayString = String.valueOf(answerValue + toAdd);
+        if (intermediate) {
+            int[] toAddArray = {
+                    -10,
+                    10,
+                    Miscellaneous.getRandomTrueOrFalse() ? 20 : -20
+            };
+            List<Integer> usedIndexes = new ArrayList<>();
+            for (int i = 0; i < 4; i++) {
+                if (i != correctIndex) {
+                    int toAdd = toAddArray[Miscellaneous.getRandomIntegerThatIsntAnother(0, 3, usedIndexes)];
+                    answerButtons.get(i).displayString = String.valueOf(x + toAdd);
+                }
+            }
+        } else {
+            for (int i = 0; i < 4; i++) {
+                if (i != correctIndex) {
+                    int toAdd = Miscellaneous.getRandomTrueOrFalse() ?
+                            Miscellaneous.getRandomIntBetweenRange(1, 5) : Miscellaneous.getRandomIntBetweenRange(-5, -1);
+                    answerButtons.get(i).displayString = String.valueOf(x + toAdd);
+                }
             }
         }
     }
@@ -292,6 +332,7 @@ public class ProblemGui extends GuiScreen {
         problem = newProblem.toString() + " = " + rightValue;
         answer = String.valueOf(x);
         answerButtons.get(correctIndex).displayString = answer;
+
         for (int i = 0; i < 4; i++) {
             if (i != correctIndex) {
                 int toAdd = Miscellaneous.getRandomTrueOrFalse() ?
@@ -299,6 +340,7 @@ public class ProblemGui extends GuiScreen {
                 answerButtons.get(i).displayString = String.valueOf(x + toAdd);
             }
         }
+
     }
 
     private void createVeryDifficultMathProblem() {
@@ -369,7 +411,7 @@ public class ProblemGui extends GuiScreen {
             String abProduct = a * b < 0 ? ("- " + Math.abs(a * b)) : ("+ " + (a * b));
             problem = "Factor: x^2 " + abSum + "x " + abProduct;
             String aString = a < 0 ? "- " + Math.abs(a) : "+ " + a;
-            String bString = b < 0 ? "- " + Math.abs(b): "+ " + b;
+            String bString = b < 0 ? "- " + Math.abs(b) : "+ " + b;
             answer = "(x " + aString + ")(x " + bString + ")";
             alternateAnswer = "(x " + bString + ")(x " + aString + ")";
         } else if (random == 1) {
@@ -382,7 +424,7 @@ public class ProblemGui extends GuiScreen {
             String abSum = a + b < 0 ? ("- " + Math.abs(a + b)) : ("+ " + (a + b));
             String abProduct = a * b < 0 ? ("- " + Math.abs(a * b)) : ("+ " + (a * b));
             String aString = a < 0 ? "- " + Math.abs(a) : "+ " + a;
-            String bString = b < 0 ? "- " + Math.abs(b): "+ " + b;
+            String bString = b < 0 ? "- " + Math.abs(b) : "+ " + b;
             problem = "Expand: (x " + aString + ")(x " + bString + ")";
             answer = "x^2 " + abSum + "x " + abProduct;
             if (a + b == 0) alternateAnswer = "x^2 " + abProduct;

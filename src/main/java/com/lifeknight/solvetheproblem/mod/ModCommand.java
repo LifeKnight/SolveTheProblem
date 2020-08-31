@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.*;
+import static com.lifeknight.solvetheproblem.mod.Core.*;
 import static net.minecraft.util.EnumChatFormatting.*;
 
 public class ModCommand extends CommandBase {

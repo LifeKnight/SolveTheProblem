@@ -160,4 +160,10 @@ public class Miscellaneous {
 	public static <T> T getRandomElement(List<T> elements) {
 		return elements.get(getRandomIntBetweenRange(0, elements.size() - 1));
 	}
+
+	public static int getRandomIntegerThatIsntAnother(int min, int max, List<Integer> previousIndexes) {
+		int randomIndex = getRandomIntBetweenRange(min, max);
+		if (!previousIndexes.contains(randomIndex)) return randomIndex;
+		return getRandomIntegerThatIsntAnother(min, max, previousIndexes);
+	}
 }

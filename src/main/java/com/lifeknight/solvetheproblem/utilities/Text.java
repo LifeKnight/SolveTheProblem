@@ -135,16 +135,70 @@ public class Text {
 	    StringBuilder result = new StringBuilder();
 
 	    while (result.length() != input.length()) {
-            int randomIndex = getRandomNumberThatIsntAnother(0, input.length() - 1, indexesUsed);
+            int randomIndex = Miscellaneous.getRandomIntegerThatIsntAnother(0, input.length() - 1, indexesUsed);
             result.append(input.charAt(randomIndex));
             indexesUsed.add(randomIndex);
         }
 	    return result.toString();
     }
 
-    private static int getRandomNumberThatIsntAnother(int min, int max, List<Integer> previousIndexes) {
-	    int randomIndex = Miscellaneous.getRandomIntBetweenRange(min, max);
-	    if (!previousIndexes.contains(randomIndex)) return randomIndex;
-	    return getRandomNumberThatIsntAnother(min, max, previousIndexes);
+    public static String formatTimeFromMilliseconds(long milliseconds) {
+        return formatTimeFromMilliseconds(milliseconds, 0);
     }
+
+    public static String formatTimeFromMilliseconds(long milliseconds, int count) {
+        long days;
+        long hours;
+        long minutes;
+        long seconds;
+        long millisecondsLeft = milliseconds;
+        days = millisecondsLeft / 86400000;
+        millisecondsLeft %= 86400000;
+        hours = millisecondsLeft / 3600000;
+        millisecondsLeft %= 3600000;
+        minutes = millisecondsLeft / 60000;
+        millisecondsLeft %= 60000;
+        seconds = millisecondsLeft / 1000;
+        millisecondsLeft %= 1000;
+
+        StringBuilder result = new StringBuilder();
+
+        if (days > 0 && count >= 4) {
+            result.append(days).append(":");
+            result.append(appendTime(hours)).append(":");
+        } else if (count >= 3) {
+            result.append(hours).append(":");
+        }
+
+
+        if (count >= 2) result.append(appendTime(minutes)).append(":");
+
+        if (count >= 1) result.append(appendTime(seconds)).append(".");
+
+        result.append(formatMilliseconds(millisecondsLeft));
+
+        return result.toString();
+    }
+
+    private static String appendTime(long timeValue) {
+        StringBuilder result = new StringBuilder();
+        if (timeValue > 9) {
+            result.append(timeValue);
+        } else {
+            result.append("0").append(timeValue);
+        }
+        return result.toString();
+    }
+
+    private static String formatMilliseconds(long milliseconds) {
+        String asString = String.valueOf(milliseconds);
+
+        if (asString.length() == 1) {
+            return "00" + milliseconds;
+        } else if (asString.length() == 2) {
+            return "0" + milliseconds;
+        }
+        return asString;
+    }
+
 }

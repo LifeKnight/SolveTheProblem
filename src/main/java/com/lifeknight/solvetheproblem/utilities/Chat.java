@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.*;
+import static com.lifeknight.solvetheproblem.mod.Core.*;
 import static net.minecraft.util.EnumChatFormatting.*;
 
 public enum Chat {

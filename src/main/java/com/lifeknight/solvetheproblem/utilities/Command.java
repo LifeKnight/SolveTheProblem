@@ -4,7 +4,7 @@ import com.lifeknight.solvetheproblem.variables.LifeKnightBoolean;
 
 import java.util.List;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.modColor;
+import static com.lifeknight.solvetheproblem.mod.Core.modColor;
 import static net.minecraft.util.EnumChatFormatting.*;
 
 public class Command {

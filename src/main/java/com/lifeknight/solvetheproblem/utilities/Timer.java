@@ -1,6 +1,6 @@
 package com.lifeknight.solvetheproblem.utilities;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.THREAD_POOL;
+import static com.lifeknight.solvetheproblem.mod.Core.THREAD_POOL;
 
 public class Timer {
     private long endTime = 0L;

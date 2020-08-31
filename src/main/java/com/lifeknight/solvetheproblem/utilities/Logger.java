@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.THREAD_POOL;
+import static com.lifeknight.solvetheproblem.mod.Core.THREAD_POOL;
 
 public class Logger {
     private File logFile;

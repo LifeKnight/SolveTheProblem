@@ -15,8 +15,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.modColor;
-import static com.lifeknight.solvetheproblem.mod.Mod.openGui;
+import static com.lifeknight.solvetheproblem.mod.Core.modColor;
+import static com.lifeknight.solvetheproblem.mod.Core.openGui;
 import static net.minecraft.util.EnumChatFormatting.*;
 
 public class LifeKnightGui extends GuiScreen {
@@ -435,7 +435,7 @@ public class LifeKnightGui extends GuiScreen {
                 }
 
                 for (GuiButton guiButton : LifeKnightGui.super.buttonList) {
-                    if (guiButton instanceof LifeKnightButton && guiButton.displayString.equals(">") || guiButton.displayString.equals("<")) {
+                    if (guiButton instanceof LifeKnightButton && (guiButton.displayString.equals(">") || guiButton.displayString.equals("<"))) {
                         guiButton.yPosition = ((LifeKnightButton) guiButton).originalYPosition + scaledScroll;
                     }
                 }
@@ -454,7 +454,7 @@ public class LifeKnightGui extends GuiScreen {
                     }
                 }
                 for (GuiButton guiButton : LifeKnightGui.super.buttonList) {
-                    if (guiButton instanceof LifeKnightButton && guiButton.displayString.equals(">")) {
+                    if (guiButton instanceof LifeKnightButton && (guiButton.displayString.equals(">") || guiButton.displayString.equals("<"))) {
                         ((LifeKnightButton) guiButton).updateOriginalYPosition();
                     }
                 }

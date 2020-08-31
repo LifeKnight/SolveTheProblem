@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.configuration;
+import static com.lifeknight.solvetheproblem.mod.Core.configuration;
 
 public abstract class LifeKnightList<E> extends LifeKnightVariable {
     private final List<E> defaultValues;

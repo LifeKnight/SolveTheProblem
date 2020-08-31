@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import static com.lifeknight.solvetheproblem.mod.Mod.modId;
+import static com.lifeknight.solvetheproblem.mod.Core.modId;
 
 public class Configuration {
 	private JsonObject configurationAsJsonObject = new JsonObject();

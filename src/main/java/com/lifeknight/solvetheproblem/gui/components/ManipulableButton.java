@@ -8,7 +8,7 @@ import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.GuiButton;
 
 import static com.lifeknight.solvetheproblem.gui.ManipulableGui.manipulableButtons;
-import static com.lifeknight.solvetheproblem.mod.Mod.gridSnapping;
+import static com.lifeknight.solvetheproblem.mod.Core.gridSnapping;
 
 public class ManipulableButton extends GuiButton {
     private final Manipulable manipulable;
