@@ -16,7 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.lifeknight.solvetheproblem.mod.Core.hudTextShadow;
-import static net.minecraft.util.EnumChatFormatting.*;
+import static net.minecraft.util.EnumChatFormatting.GREEN;
+import static net.minecraft.util.EnumChatFormatting.RED;
 
 public abstract class EnhancedHudText extends Manipulable {
     public static final List<EnhancedHudText> textToRender = new ArrayList<>();

@@ -140,7 +140,7 @@ public class ProblemGui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (keyCode == 1 && (!hardLock.getValue()) || !runMod.getValue()) {
+        if ((keyCode == 1 && (!hardLock.getValue()) || !runMod.getValue()) || keyCode == disableModKeyBind.getKeyCode()) {
             this.close();
             return;
         }
@@ -260,8 +260,9 @@ public class ProblemGui extends GuiScreen {
             List<Integer> usedIndexes = new ArrayList<>();
             for (int i = 0; i < 4; i++) {
                 if (i != correctIndex) {
-                    int toAdd = toAddArray[Miscellaneous.getRandomIntegerThatIsntAnother(0, 3, usedIndexes)];
-                    answerButtons.get(i).displayString = String.valueOf(x + toAdd);
+                    int toAdd = toAddArray[Miscellaneous.getRandomIntegerThatIsntAnother(0, 2, usedIndexes)];
+                    answerButtons.get(i).displayString = String.valueOf(answerValue + toAdd);
+                    usedIndexes.add(i);
                 }
             }
         } else {
@@ -269,7 +270,7 @@ public class ProblemGui extends GuiScreen {
                 if (i != correctIndex) {
                     int toAdd = Miscellaneous.getRandomTrueOrFalse() ?
                             Miscellaneous.getRandomIntBetweenRange(1, 5) : Miscellaneous.getRandomIntBetweenRange(-5, -1);
-                    answerButtons.get(i).displayString = String.valueOf(x + toAdd);
+                    answerButtons.get(i).displayString = String.valueOf(answerValue + toAdd);
                 }
             }
         }

@@ -1,16 +1,10 @@
 package com.lifeknight.solvetheproblem.utilities;
 
-import com.lifeknight.solvetheproblem.gui.hud.EnhancedHudText;
-import com.lifeknight.solvetheproblem.variables.LifeKnightCycle;
-import com.lifeknight.solvetheproblem.variables.LifeKnightNumber;
 import net.minecraft.util.EnumChatFormatting;
 
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.lifeknight.solvetheproblem.gui.hud.EnhancedHudText.textToRender;
 import static net.minecraft.util.EnumChatFormatting.*;
 
 public class Miscellaneous {
@@ -18,20 +12,8 @@ public class Miscellaneous {
 		return ThreadLocalRandom.current().nextInt(min, max + 1);
 	}
 
-	public static double getRandomDoubleBetweenRange(double min, double max) {
-		return ThreadLocalRandom.current().nextDouble(min, max);
-	}
-
 	public static boolean getRandomTrueOrFalse() {
 		return getRandomIntBetweenRange(0, 1) == 1;
-	}
-
-	public static String getCurrentDateString() {
-		return new SimpleDateFormat("MM/dd/yyyy").format(System.currentTimeMillis());
-	}
-
-	public static String getCurrentTimeString() {
-		return new SimpleDateFormat("hh:mm:ss a").format(System.currentTimeMillis());
 	}
 
 	public static EnumChatFormatting getEnumChatFormatting(String formattedName) {
@@ -68,93 +50,6 @@ public class Miscellaneous {
 				return DARK_GRAY;
 		}
 		return BLACK;
-	}
-
-	public static void createEnhancedHudTextDefaultPropertyVariables() {
-		new LifeKnightNumber.LifeKnightFloat("Default Text Scale", "HUD", 1.0F, 0.1F, 5.0F) {
-			@Override
-			public void onSetValue() {
-				for (EnhancedHudText enhancedHudText : textToRender) {
-					enhancedHudText.setScale(this.getValue());
-				}
-			}
-		}.setiCustomDisplayString(objects -> {
-			float value = (float) objects[0];
-			return "Scale: " + value * 100 + "%";
-		});;
-		new LifeKnightCycle("Default Separator", "HUD", Arrays.asList(" > ", ": ", " | ", " - ")) {
-			@Override
-			public void onValueChange() {
-				for (EnhancedHudText enhancedHudText : textToRender) {
-					enhancedHudText.setSeparator(this.getValue());
-				}
-			}
-
-			@Override
-			public String getCustomDisplayString() {
-				return "Default Separator:" + YELLOW + (this.getCurrentValueString().equals(":") ? " :" : this.getCurrentValueString());
-			}
-		};
-		new LifeKnightCycle("Default Prefix Color", "HUD", Arrays.asList(
-				"Red",
-				"Gold",
-				"Yellow",
-				"Green",
-				"Aqua",
-				"Blue",
-				"Light Purple",
-				"Dark Red",
-				"Dark Green",
-				"Dark Aqua",
-				"Dark Blue",
-				"Dark Purple",
-				"White",
-				"Gray",
-				"Dark Gray",
-				"Black"
-		), 12) {
-			@Override
-			public void onValueChange() {
-				for (EnhancedHudText enhancedHudText : textToRender) {
-					enhancedHudText.setPrefixColor(this.getValue());
-				}
-			}
-
-			@Override
-			public String getCustomDisplayString() {
-				return "Default Prefix Color: " + Miscellaneous.getEnumChatFormatting(this.getCurrentValueString()) + this.getCurrentValueString();
-			}
-		};
-		new LifeKnightCycle("Default Content Color", "HUD", Arrays.asList(
-				"Red",
-				"Gold",
-				"Yellow",
-				"Green",
-				"Aqua",
-				"Blue",
-				"Light Purple",
-				"Dark Red",
-				"Dark Green",
-				"Dark Aqua",
-				"Dark Blue",
-				"Dark Purple",
-				"White",
-				"Gray",
-				"Dark Gray",
-				"Black"
-		), 12) {
-			@Override
-			public void onValueChange() {
-				for (EnhancedHudText enhancedHudText : textToRender) {
-					enhancedHudText.setContentColor(this.getValue());
-				}
-			}
-
-			@Override
-			public String getCustomDisplayString() {
-				return "Default Content Color: " + Miscellaneous.getEnumChatFormatting(this.getCurrentValueString()) + this.getCurrentValueString();
-			}
-		};
 	}
 
 	public static <T> T getRandomElement(List<T> elements) {

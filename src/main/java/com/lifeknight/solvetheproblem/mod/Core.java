@@ -15,6 +15,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -40,15 +41,16 @@ import static net.minecraft.util.EnumChatFormatting.DARK_BLUE;
 public class Core {
     public static final String
             modName = "SolveTheProblem",
-            modVersion = "0.2",
+            modVersion = "0.2.1",
             modId = "solvetheproblem";
     public static final EnumChatFormatting modColor = DARK_BLUE;
     public static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool(new LifeKnightThreadFactory());
     public static GuiScreen guiToOpen = null;
-    private static final KeyBinding disableModKeyBind = new KeyBinding("Disable SolveTheProblem", 0x2B, modName);
-    public static final LifeKnightBoolean runMod = new LifeKnightBoolean("Core", "Main", true);
+    public static final KeyBinding disableModKeyBind = new KeyBinding("Disable SolveTheProblem", 0x2B, modName);
+    public static final LifeKnightBoolean runMod = new LifeKnightBoolean("Mod", "Main", false);
     public static final LifeKnightBoolean gridSnapping = new LifeKnightBoolean("Grid Snapping", "HUD", true);
     public static final LifeKnightBoolean hudTextShadow = new LifeKnightBoolean("HUD Text Shadow", "HUD", true);
+    public static final LifeKnightBoolean linkToGame = new LifeKnightBoolean("Link To Game", "Settings", true);
     public static final LifeKnightCycle problemDifficulty = new LifeKnightCycle("Problem Difficulty", "Settings", Arrays.asList(
             "Easy",
             "Intermediate",
@@ -75,6 +77,8 @@ public class Core {
     public static final LifeKnightBoolean showTimer = new LifeKnightBoolean("Show Timer", "Timer", true);
     public static final LifeKnightNumber.LifeKnightFloat problemChance = new LifeKnightNumber.LifeKnightFloat("Problem Chance", "Random", 0.05F, 0.001F, 0.99F);
     public static final LifeKnightNumber.LifeKnightInteger checkInterval = new LifeKnightNumber.LifeKnightInteger("Check Interval", "Random", 10, 1, 60);
+    private static boolean canStart = false;
+    private static boolean onHypixel = false;
     public static com.lifeknight.solvetheproblem.utilities.Timer problemTimer;
     public static List<String> nounsLength4 = new ArrayList<>();
     public static List<String> nounsLength5 = new ArrayList<>();
@@ -92,12 +96,12 @@ public class Core {
     private static long ticksSinceClose = 0L;
 
     @EventHandler
-    public void preInit(FMLPreInitializationEvent preInitializationEvent) {
+    public void preInitialize(FMLPreInitializationEvent event) {
         THREAD_POOL.submit(this::gatherNouns);
     }
 
     @EventHandler
-    public void init(FMLInitializationEvent initEvent) {
+    public void initialize(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         ClientRegistry.registerKeyBinding(disableModKeyBind);
         ClientCommandHandler.instance.registerCommand(new ModCommand());
@@ -107,10 +111,13 @@ public class Core {
             return problemChance.getName() + ": " + value * 100 + "%";
         });
 
+        problemTimer = new com.lifeknight.solvetheproblem.utilities.Timer(timerTime.getValue());
+        problemTimer.onEnd(Core::onTimerEnd);
+
         new EnhancedHudText("ProblemTimer") {
             @Override
             public String getTextToDisplay() {
-                return problemTimer != null ? Text.formatTimeFromMilliseconds(problemTimer.getTotalMilliseconds(), 2) : "";
+                return Text.formatTimeFromMilliseconds(problemTimer.getTotalMilliseconds(), 2);
             }
 
             @Override
@@ -124,7 +131,19 @@ public class Core {
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
-        if (runMod.getValue()) onProblemClose();
+        canStart = false;
+        if (runMod.getValue() && !linkToGame.getValue()) onProblemClose();
+    }
+
+    @SubscribeEvent
+    public void onChatMessage(ClientChatReceivedEvent event) {
+        if (!onHypixel) return;
+        String message = Text.removeFormattingCodes(event.message.getFormattedText());
+
+        if (!message.contains(":") && message.toLowerCase().startsWith("cages opened!") || message.toLowerCase().contains("protect your bed")) {
+            canStart = true;
+            onProblemClose();
+        }
     }
 
     @SubscribeEvent
@@ -133,30 +152,27 @@ public class Core {
             @Override
             public void run() {
                 Chat.sendQueuedChatMessages();
+                onHypixel = !Minecraft.getMinecraft().isSingleplayer() && Minecraft.getMinecraft().getCurrentServerData().serverIP.toLowerCase().contains("hypixel.net");
             }
         }, 1000);
     }
 
     public static void onTimerEnd() {
-        if (Minecraft.getMinecraft().thePlayer != null && (Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui) && !(Minecraft.getMinecraft().currentScreen instanceof LifeKnightGui))) && runMod.getValue() && waitType.getValue() == 0) {
+        if (waitType.getValue() == 0) {
             displayProblem();
         }
         problemTimer.stop();
     }
 
     public static void displayProblem() {
-        if (Minecraft.getMinecraft().thePlayer != null) openGui(new ProblemGui());
+        if (Minecraft.getMinecraft().thePlayer != null && (Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui) && !(Minecraft.getMinecraft().currentScreen instanceof LifeKnightGui))) && runMod.getValue())
+            openGui(new ProblemGui());
     }
 
     public static void onProblemClose() {
         if (waitType.getValue() == 0) {
-            if (problemTimer == null) {
-                problemTimer = new com.lifeknight.solvetheproblem.utilities.Timer(timerTime.getValue());
-                problemTimer.onEnd(Core::onTimerEnd);
-            } else {
-                problemTimer.reset();
-                problemTimer.setTimeFromSeconds(timerTime.getValue());
-            }
+            problemTimer.reset();
+            problemTimer.setTimeFromSeconds(timerTime.getValue());
             problemTimer.start();
         } else {
             ticksSinceClose = 0L;
@@ -169,7 +185,7 @@ public class Core {
             Minecraft.getMinecraft().displayGuiScreen(guiToOpen);
             guiToOpen = null;
         }
-        Manipulable.renderManipulables();
+        if (event.phase == TickEvent.Phase.END && runMod.getValue()) Manipulable.renderManipulables();
     }
 
     @SubscribeEvent
@@ -178,7 +194,15 @@ public class Core {
         if (event.phase == TickEvent.Phase.END) {
             ticksSinceClose++;
         }
-        if ((Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui) && !(Minecraft.getMinecraft().currentScreen instanceof LifeKnightGui))) && runMod.getValue()) {
+
+        if (linkToGame.getValue()) {
+            if (Minecraft.getMinecraft().thePlayer.capabilities.allowFlying) {
+                if (problemTimer.isRunning()) problemTimer.pause();
+            }
+            return;
+        }
+
+        if (((Minecraft.getMinecraft().inGameHasFocus || (superimposeGui.getValue() && !(Minecraft.getMinecraft().currentScreen instanceof ProblemGui) && !(Minecraft.getMinecraft().currentScreen instanceof LifeKnightGui))) && runMod.getValue())) {
             if (waitType.getValue() == 0 && !problemTimer.isRunning()) {
                 new Timer().schedule(new TimerTask() {
                     @Override
@@ -187,7 +211,7 @@ public class Core {
                             onProblemClose();
                         }
                     }
-                }, 500);
+                }, 50);
             }
             if (waitType.getValue() == 1 && ticksSinceClose / 20 >= checkInterval.getValue()) {
                 ticksSinceClose = 0L;
@@ -251,8 +275,8 @@ public class Core {
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 }

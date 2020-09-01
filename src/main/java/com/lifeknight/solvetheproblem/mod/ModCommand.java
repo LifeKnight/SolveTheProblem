@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.lifeknight.solvetheproblem.mod.Core.*;
-import static net.minecraft.util.EnumChatFormatting.*;
+import static net.minecraft.util.EnumChatFormatting.DARK_GREEN;
 
 public class ModCommand extends CommandBase {
     private final List<String> aliases = Collections.singletonList("stp");
