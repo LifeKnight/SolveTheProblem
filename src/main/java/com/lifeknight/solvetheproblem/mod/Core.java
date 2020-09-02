@@ -41,7 +41,7 @@ import static net.minecraft.util.EnumChatFormatting.DARK_BLUE;
 public class Core {
     public static final String
             modName = "SolveTheProblem",
-            modVersion = "0.2.1",
+            modVersion = "1.0",
             modId = "solvetheproblem";
     public static final EnumChatFormatting modColor = DARK_BLUE;
     public static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool(new LifeKnightThreadFactory());
@@ -63,7 +63,7 @@ public class Core {
             "Scramble Only",
             "Math Only"
     ));
-    public static final LifeKnightBoolean superimposeGui = new LifeKnightBoolean("Super Impose GUI", "Settings", false);
+    public static final LifeKnightBoolean superimposeGui = new LifeKnightBoolean("Superimpose GUI", "Settings", false);
     public static final LifeKnightBoolean hardLock = new LifeKnightBoolean("Hard Lock", "Settings", false);
     public static final LifeKnightCycle waitType = new LifeKnightCycle("Wait Type", "Settings", Arrays.asList(
             "Timer",
@@ -73,11 +73,10 @@ public class Core {
             Core.onProblemClose();
         }
     };
-    public static final LifeKnightNumber.LifeKnightInteger timerTime = new LifeKnightNumber.LifeKnightInteger("Timer Time", "Timer", 60, 5, 300);
+    public static final LifeKnightNumber.LifeKnightInteger timerTime = new LifeKnightNumber.LifeKnightInteger("Timer Time", "Timer", 15, 5, 120);
     public static final LifeKnightBoolean showTimer = new LifeKnightBoolean("Show Timer", "Timer", true);
     public static final LifeKnightNumber.LifeKnightFloat problemChance = new LifeKnightNumber.LifeKnightFloat("Problem Chance", "Random", 0.05F, 0.001F, 0.99F);
     public static final LifeKnightNumber.LifeKnightInteger checkInterval = new LifeKnightNumber.LifeKnightInteger("Check Interval", "Random", 10, 1, 60);
-    private static boolean canStart = false;
     private static boolean onHypixel = false;
     public static com.lifeknight.solvetheproblem.utilities.Timer problemTimer;
     public static List<String> nounsLength4 = new ArrayList<>();
@@ -122,7 +121,7 @@ public class Core {
 
             @Override
             public boolean isVisible() {
-                return runMod.getValue() && waitType.getValue() == 0 && showTimer.getValue();
+                return waitType.getValue() == 0 && showTimer.getValue();
             }
         };
 
@@ -131,7 +130,6 @@ public class Core {
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
-        canStart = false;
         if (runMod.getValue() && !linkToGame.getValue()) onProblemClose();
     }
 
@@ -141,7 +139,6 @@ public class Core {
         String message = Text.removeFormattingCodes(event.message.getFormattedText());
 
         if (!message.contains(":") && message.toLowerCase().startsWith("cages opened!") || message.toLowerCase().contains("protect your bed")) {
-            canStart = true;
             onProblemClose();
         }
     }

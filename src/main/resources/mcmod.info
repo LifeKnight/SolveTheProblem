@@ -1,16 +1,11 @@
 [
 {
-  "modid": "mod",
-  "name": "Mod",
-  "description": "A Mod.",
+  "modid": "solvetheproblem",
+  "name": "SolveTheProblem",
+  "description": "Displays a GUI where you have to solve a problem before you can move again.",
   "version": "${version}",
   "mcversion": "${mcversion}",
-  "url": "",
-  "updateUrl": "",
+  "url": "https://docs.google.com/document/d/1Y7BWoXagOCpfOi9WSlWcNZZzHkF0f9rIn28iv8auRW4/edit?usp=sharing",
   "authorList": ["LifeKnight"],
-  "credits": "",
-  "logoFile": "",
-  "screenshots": [],
-  "dependencies": []
 }
 ]
