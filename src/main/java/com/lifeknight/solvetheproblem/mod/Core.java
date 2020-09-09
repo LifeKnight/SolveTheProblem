@@ -41,7 +41,7 @@ import static net.minecraft.util.EnumChatFormatting.DARK_BLUE;
 public class Core {
     public static final String
             modName = "SolveTheProblem",
-            modVersion = "1.0",
+            modVersion = "1.0.1",
             modId = "solvetheproblem";
     public static final EnumChatFormatting modColor = DARK_BLUE;
     public static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool(new LifeKnightThreadFactory());
